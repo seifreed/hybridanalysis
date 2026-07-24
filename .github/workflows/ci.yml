@@ -9,13 +9,13 @@ jobs:
   test:
     name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         os:
           - ubuntu-latest       # Linux x64
           - ubuntu-24.04-arm    # Linux ARM
-          - macos-13            # macOS x64
           - macos-latest        # macOS ARM
           - windows-latest      # Windows x64
           - windows-11-arm      # Windows ARM
