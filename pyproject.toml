@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hybridanalysis"
+version = "0.1.0"
+description = "Python library and CLI for the Hybrid Analysis (Falcon Sandbox) API v2"
+readme = "README.md"
+requires-python = ">=3.14"
+license = "MIT"
+authors = [{ name = "Marc Rivero Lopez", email = "mriverolopez@gmail.com" }]
+keywords = ["hybrid-analysis", "falcon-sandbox", "malware", "sandbox", "api", "cli"]
+dependencies = [
+    "httpx>=0.27",
+    "click>=8.1",
+    "toon-format>=0.9.0b1",
+]
+
+[project.urls]
+Homepage = "https://github.com/seifreed/hybridanalysis"
+
+[project.scripts]
+hybridanalysis = "hybridanalysis.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hybridanalysis"]
+
+[tool.black]
+line-length = 100
+target-version = ["py314"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# Security rules (S/bandit-equivalent) are intentionally owned by bandit, run
+# against src only. Keeping them out of ruff avoids per-file exclusions for the
+# asserts that pytest requires in tests.
+select = [
+    "E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF", "TID",
+]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+files = ["src", "tests"]
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+addopts = "--cov=hybridanalysis --cov-report=term-missing --cov-fail-under=100 -q"
+testpaths = ["tests"]
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["hybridanalysis"]

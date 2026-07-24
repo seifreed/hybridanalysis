@@ -1,0 +1,10 @@
+# Single dependency file: runtime (via the package itself) + development tools.
+-e .
+
+pytest>=8
+pytest-cov>=5
+black>=24
+ruff>=0.6
+mypy>=1.11
+bandit>=1.7
+pip-audit>=2.7
