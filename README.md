@@ -5,7 +5,7 @@
 <h1 align="center">hybridanalysis</h1>
 
 <p align="center">
-  <strong>Production-grade Python library and CLI for the Hybrid Analysis (Falcon Sandbox) API v2</strong>
+  <strong>Python library and CLI for the Hybrid Analysis (Falcon Sandbox) API v2</strong>
 </p>
 
 <p align="center">
