@@ -61,6 +61,12 @@ Errors       AuthenticationError · NotFoundError · RateLimitError · APIError
 
 ## Installation
 
+### From PyPI
+
+```bash
+pip install hybridanalysis
+```
+
 ### From Source
 
 ```bash
@@ -68,10 +74,10 @@ git clone https://github.com/seifreed/hybridanalysis.git
 cd hybridanalysis
 python3.14 -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -e ".[dev]"
+pip install -r requirements.txt  # runtime + dev tooling; use `pip install -e .` for runtime only
 ```
 
-> Requires **Python 3.14+**. Runtime dependencies are `httpx` and `click`.
+> Requires **Python 3.14+**. Runtime dependencies are `httpx`, `click`, and `toon-format`.
 
 ---
 
