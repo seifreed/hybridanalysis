@@ -9,8 +9,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from toon_format import encode as _toon_encode
-
 _SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
 _VERDICT_LEVEL = {"malicious": "error", "suspicious": "warning"}
 _THREAT_LEVEL = {2: "error", 1: "warning", 0: "note"}
@@ -22,8 +20,14 @@ def to_json(data: Any) -> str:
 
 
 def to_toon(data: Any) -> str:
-    """Serialize a response as TOON (token-efficient JSON alternative)."""
-    return _toon_encode(data)
+    """Serialize a response as TOON (token-efficient JSON alternative).
+
+    TOON support lives in the optional ``toon`` extra: ``pip install
+    'hybridanalysis[toon]'``. Without it this raises ``ModuleNotFoundError``.
+    """
+    from toon_format import encode
+
+    return encode(data)
 
 
 def _records(data: Any) -> list[dict[str, Any]]:

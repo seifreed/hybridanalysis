@@ -1,5 +1,5 @@
-# Single dependency file: runtime (via the package itself) + development tools.
--e .
+# Single dependency file: runtime + optional TOON extra + development tools.
+-e .[toon]
 
 pytest>=8
 pytest-cov>=5

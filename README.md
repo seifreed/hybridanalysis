@@ -64,7 +64,8 @@ Errors       AuthenticationError · NotFoundError · RateLimitError · APIError
 ### From PyPI
 
 ```bash
-pip install hybridanalysis
+pip install hybridanalysis            # core
+pip install 'hybridanalysis[toon]'    # + TOON output (`--format toon`)
 ```
 
 ### From Source
@@ -77,7 +78,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt  # runtime + dev tooling; use `pip install -e .` for runtime only
 ```
 
-> Requires **Python 3.14+**. Runtime dependencies are `httpx`, `click`, and `toon-format`.
+> Requires **Python 3.14+**. Runtime dependencies are `httpx` and `click`; `--format toon` needs the optional `toon` extra (`toon-format`).
 
 ---
 
@@ -154,7 +155,7 @@ hybridanalysis report summary <job-id> --format sarif # SARIF 2.1.0 findings
 | Format | Available on | Description |
 |--------|--------------|-------------|
 | `json` | all commands (default) | Indented JSON. |
-| `toon` | all commands | [TOON](https://github.com/toon-format/toon) — a compact, lossless JSON encoding that uses fewer tokens. |
+| `toon` | all commands | [TOON](https://github.com/toon-format/toon) — a compact, lossless JSON encoding that uses fewer tokens. Needs the `toon` extra: `pip install 'hybridanalysis[toon]'`. |
 | `sarif` | analysis commands (`feed`, `overview`, `search`, `quick-scan`, `report`) | SARIF 2.1.0: the `verdict` and each `signatures[]` entry become results, with levels derived from the verdict / threat level. The artifact location is taken from the command's SHA256 / report-id argument. |
 
 ### Command Groups

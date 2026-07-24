@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hybridanalysis"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python library and CLI for the Hybrid Analysis (Falcon Sandbox) API v2"
 readme = "README.md"
 requires-python = ">=3.14"
@@ -14,8 +14,13 @@ keywords = ["hybrid-analysis", "falcon-sandbox", "malware", "sandbox", "api", "c
 dependencies = [
     "httpx>=0.27",
     "click>=8.1",
-    "toon-format==0.9.0b1",
 ]
+
+[project.optional-dependencies]
+# TOON output (`--format toon`). Its only working release is a pre-release, which
+# some installers (uv/pipx) refuse transitively; keeping it optional lets the base
+# install resolve everywhere. Install with: pip install 'hybridanalysis[toon]'
+toon = ["toon-format==0.9.0b1"]
 
 [project.urls]
 Homepage = "https://github.com/seifreed/hybridanalysis"
