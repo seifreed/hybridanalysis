@@ -710,9 +710,7 @@ def labs_search_query(
     fmt: str,
 ) -> None:
     _emit(
-        client.labs.search_query(
-            query, page=page, size=size, date_from=date_from, date_to=date_to
-        ),
+        client.labs.search_query(query, page=page, size=size, date_from=date_from, date_to=date_to),
         fmt,
     )
 

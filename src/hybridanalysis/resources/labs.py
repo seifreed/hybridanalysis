@@ -34,9 +34,7 @@ class LabsResource(BaseResource):
     ) -> Any:
         return self._post_json(
             "/api/labs/search/query/run",
-            json=_provided(
-                query=query, page=page, size=size, date_from=date_from, date_to=date_to
-            ),
+            json=_provided(query=query, page=page, size=size, date_from=date_from, date_to=date_to),
         )
 
     def search_results(self, query_id: str) -> Any:

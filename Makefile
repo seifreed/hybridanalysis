@@ -1,7 +1,7 @@
 .PHONY: install format lint type security test gate
 
 install:
-	pip install -e ".[dev]"
+	pip install -r requirements.txt
 
 format:
 	black .

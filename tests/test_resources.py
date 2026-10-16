@@ -209,9 +209,12 @@ def test_labs_endpoints(client: HybridAnalysisClient, server: LocalAPIServer) ->
     assert client.labs.search_query("verdict:malicious")["path"] == "/api/labs/search/query/run"
     assert json.loads(server.requests[-1].body) == {"query": "verdict:malicious"}
     assert server.requests[-1].headers["content-type"].startswith("application/json")
-    assert client.labs.search_query(
-        "verdict:malicious", page=2, size=100, date_from="2026-01-01", date_to="2026-02-01"
-    )["path"] == "/api/labs/search/query/run"
+    assert (
+        client.labs.search_query(
+            "verdict:malicious", page=2, size=100, date_from="2026-01-01", date_to="2026-02-01"
+        )["path"]
+        == "/api/labs/search/query/run"
+    )
     assert json.loads(server.requests[-1].body) == {
         "query": "verdict:malicious",
         "page": 2,
@@ -230,9 +233,12 @@ def test_labs_endpoints(client: HybridAnalysisClient, server: LocalAPIServer) ->
         "threat_category": ["ransomware", "trojan"],
         "status": ["active"],
     }
-    assert client.labs.create_yara_rule(
-        "rule-1", ["ransomware"], "rule source", active=True, daily_notifications_limit=10
-    )["path"] == "/api/labs/hunting/yara-rules"
+    assert (
+        client.labs.create_yara_rule(
+            "rule-1", ["ransomware"], "rule source", active=True, daily_notifications_limit=10
+        )["path"]
+        == "/api/labs/hunting/yara-rules"
+    )
     assert json.loads(server.requests[-1].body) == {
         "identifier": "rule-1",
         "threat_categories": ["ransomware"],
@@ -241,9 +247,12 @@ def test_labs_endpoints(client: HybridAnalysisClient, server: LocalAPIServer) ->
         "daily_notifications_limit": 10,
     }
     assert client.labs.get_yara_rule("rule-1")["path"] == "/api/labs/hunting/yara-rules/rule-1"
-    assert client.labs.update_yara_rule(
-        "rule-1", identifier="new-name", active=False, reset_counter=True
-    )["path"] == "/api/labs/hunting/yara-rules/rule-1"
+    assert (
+        client.labs.update_yara_rule(
+            "rule-1", identifier="new-name", active=False, reset_counter=True
+        )["path"]
+        == "/api/labs/hunting/yara-rules/rule-1"
+    )
     assert json.loads(server.requests[-1].body) == {
         "identifier": "new-name",
         "active": False,
