@@ -60,6 +60,9 @@ def _error_status(path: str) -> int | None:
 
 def _headers_from_environ(environ: WSGIEnvironment) -> dict[str, str]:
     headers = {}
+    content_type = environ.get("CONTENT_TYPE")
+    if isinstance(content_type, str):
+        headers["content-type"] = content_type
     for key, value in environ.items():
         if key.startswith("HTTP_") and isinstance(value, str):
             headers[key[5:].replace("_", "-").lower()] = value

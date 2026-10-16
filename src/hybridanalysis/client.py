@@ -14,6 +14,7 @@ from .resources import (
     FeedResource,
     FileCollectionResource,
     KeyResource,
+    LabsResource,
     OverviewResource,
     QuickScanResource,
     ReportResource,
@@ -37,6 +38,7 @@ class HybridAnalysisClient(SyncCloseable):
         self._transport = Transport(config, http_client)
         self.feed = FeedResource(self._transport)
         self.key = KeyResource(self._transport)
+        self.labs = LabsResource(self._transport)
         self.overview = OverviewResource(self._transport)
         self.quick_scan = QuickScanResource(self._transport)
         self.submit = SubmitResource(self._transport)

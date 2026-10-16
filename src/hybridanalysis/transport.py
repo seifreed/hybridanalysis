@@ -32,16 +32,21 @@ class Transport(SyncCloseable):
         params: dict[str, Any] | None = None,
         data: dict[str, Any] | None = None,
         files: dict[str, tuple[str, bytes | BinaryIO]] | None = None,
+        json: dict[str, Any] | None = None,
         parse: Parse = "json",
     ) -> Any:
         """Send a request and return the parsed body, raising on error status."""
         try:
-            response = self._client.request(method, path, params=params, data=data, files=files)
+            response = self._client.request(
+                method, path, params=params, data=data, files=files, json=json
+            )
         except httpx.HTTPError as exc:
             if not retryable(method, exc):
                 raise NetworkError(f"Request to {path} failed: {exc}") from exc
             try:
-                response = self._client.request(method, path, params=params, data=data, files=files)
+                response = self._client.request(
+                    method, path, params=params, data=data, files=files, json=json
+                )
             except httpx.HTTPError as retry_exc:
                 raise NetworkError(f"Request to {path} failed: {retry_exc}") from retry_exc
         return parse_response(response, parse)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from hybridanalysis.client import HybridAnalysisClient
@@ -195,6 +196,60 @@ def test_file_collection_endpoints(
     assert client.file_collection.download("c1") == b"BINARY-DATA"
     assert client.file_collection.download_selected("c1", ["h1", "h2"]) == b"BINARY-DATA"
     assert server.requests[-1].form["hashes[]"] == ["h1", "h2"]
+
+
+def test_labs_endpoints(client: HybridAnalysisClient, server: LocalAPIServer) -> None:
+    assert client.labs.recent_matches()["path"] == "/api/labs/hunting/matches/recent"
+    recent = client.labs.recent_matches(items_count=20, search_after="2026-01-01T00:00:00Z")
+    assert recent["query"] == {
+        "items_count": ["20"],
+        "search_after": ["2026-01-01T00:00:00Z"],
+    }
+    assert client.labs.overview("a" * 64)["path"] == f"/api/labs/sample/{'a' * 64}/overview"
+    assert client.labs.search_query("verdict:malicious")["path"] == "/api/labs/search/query/run"
+    assert json.loads(server.requests[-1].body) == {"query": "verdict:malicious"}
+    assert server.requests[-1].headers["content-type"].startswith("application/json")
+    assert client.labs.search_query(
+        "verdict:malicious", page=2, size=100, date_from="2026-01-01", date_to="2026-02-01"
+    )["path"] == "/api/labs/search/query/run"
+    assert json.loads(server.requests[-1].body) == {
+        "query": "verdict:malicious",
+        "page": 2,
+        "size": 100,
+        "date_from": "2026-01-01",
+        "date_to": "2026-02-01",
+    }
+    assert client.labs.search_results("search-1")["path"] == (
+        "/api/labs/search/query/search-1/results"
+    )
+    assert client.labs.yara_rules()["path"] == "/api/labs/hunting/yara-rules"
+    assert client.labs.yara_rules(
+        search="rule-name", threat_category=["ransomware", "trojan"], status="active"
+    )["query"] == {
+        "search": ["rule-name"],
+        "threat_category": ["ransomware", "trojan"],
+        "status": ["active"],
+    }
+    assert client.labs.create_yara_rule(
+        "rule-1", ["ransomware"], "rule source", active=True, daily_notifications_limit=10
+    )["path"] == "/api/labs/hunting/yara-rules"
+    assert json.loads(server.requests[-1].body) == {
+        "identifier": "rule-1",
+        "threat_categories": ["ransomware"],
+        "rule": "rule source",
+        "active": True,
+        "daily_notifications_limit": 10,
+    }
+    assert client.labs.get_yara_rule("rule-1")["path"] == "/api/labs/hunting/yara-rules/rule-1"
+    assert client.labs.update_yara_rule(
+        "rule-1", identifier="new-name", active=False, reset_counter=True
+    )["path"] == "/api/labs/hunting/yara-rules/rule-1"
+    assert json.loads(server.requests[-1].body) == {
+        "identifier": "new-name",
+        "active": False,
+        "reset_counter": True,
+    }
+    assert client.labs.delete_yara_rule("rule-1") is None
 
 
 def test_from_env_builds_client(server: LocalAPIServer) -> None:

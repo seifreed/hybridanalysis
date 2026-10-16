@@ -6,6 +6,7 @@ from .abuse_reports import AbuseReportsResource
 from .feed import FeedResource
 from .file_collection import FileCollectionResource
 from .key import KeyResource
+from .labs import LabsResource
 from .overview import OverviewResource
 from .quick_scan import QuickScanResource
 from .report import ReportResource
@@ -18,6 +19,7 @@ __all__ = [
     "FeedResource",
     "FileCollectionResource",
     "KeyResource",
+    "LabsResource",
     "OverviewResource",
     "QuickScanResource",
     "ReportResource",

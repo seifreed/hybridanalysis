@@ -15,6 +15,7 @@ from .resources import (
     AsyncFeedResource,
     AsyncFileCollectionResource,
     AsyncKeyResource,
+    AsyncLabsResource,
     AsyncOverviewResource,
     AsyncQuickScanResource,
     AsyncReportResource,
@@ -38,6 +39,7 @@ class AsyncHybridAnalysisClient(AsyncCloseable):
         self._transport = AsyncTransport(config, http_client)
         self.feed = AsyncFeedResource(self._transport)
         self.key = AsyncKeyResource(self._transport)
+        self.labs = AsyncLabsResource(self._transport)
         self.overview = AsyncOverviewResource(self._transport)
         self.quick_scan = AsyncQuickScanResource(self._transport)
         self.submit = AsyncSubmitResource(self._transport)

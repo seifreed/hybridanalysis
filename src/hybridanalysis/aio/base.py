@@ -30,6 +30,9 @@ class AsyncBaseResource(BaseResource):
     async def _post(self, path: str, *, data: dict[str, Any] | None = None) -> Any:
         return await self._transport.request("POST", path, data=data)
 
+    async def _post_json(self, path: str, *, json: dict[str, Any]) -> Any:
+        return await self._transport.request("POST", path, json=json)
+
     async def _post_bytes(self, path: str, *, data: dict[str, Any] | None = None) -> Any:
         return await self._transport.request("POST", path, data=data, parse="bytes")
 

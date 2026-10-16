@@ -33,6 +33,7 @@ class SupportsRequest(Protocol):
         params: dict[str, Any] | None = ...,
         data: dict[str, Any] | None = ...,
         files: dict[str, tuple[str, bytes | BinaryIO]] | None = ...,
+        json: dict[str, Any] | None = ...,
         parse: Parse = ...,
     ) -> Any: ...
 
@@ -54,6 +55,9 @@ class BaseResource:
 
     def _post(self, path: str, *, data: dict[str, Any] | None = None) -> Any:
         return self._transport.request("POST", path, data=data)
+
+    def _post_json(self, path: str, *, json: dict[str, Any]) -> Any:
+        return self._transport.request("POST", path, json=json)
 
     def _post_bytes(self, path: str, *, data: dict[str, Any] | None = None) -> Any:
         return self._transport.request("POST", path, data=data, parse="bytes")

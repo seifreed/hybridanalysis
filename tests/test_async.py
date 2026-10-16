@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import socket
 from collections.abc import Coroutine
 from pathlib import Path
@@ -194,6 +195,35 @@ def test_async_client_covers_all_helpers(
             uploaded = await client.submit.file(upload, environment_id="160")  # _post_file
             assert uploaded["path"] == "/submit/file"
             assert b"s.bin" in server.requests[-1].body
+
+    run(body())
+
+
+def test_async_labs_endpoints(config: Config, server: LocalAPIServer) -> None:
+    async def body() -> None:
+        async with AsyncHybridAnalysisClient(config) as client:
+            assert (await client.labs.recent_matches(items_count=5))["path"] == (
+                "/api/labs/hunting/matches/recent"
+            )
+            assert (await client.labs.overview("abc"))["path"] == "/api/labs/sample/abc/overview"
+            await client.labs.search_query("verdict:malicious", size=10)
+            assert json.loads(server.requests[-1].body) == {
+                "query": "verdict:malicious",
+                "size": 10,
+            }
+            assert (await client.labs.search_results("s1"))["path"] == (
+                "/api/labs/search/query/s1/results"
+            )
+            await client.labs.yara_rules(threat_category=["trojan"])
+            assert server.requests[-1].query == {"threat_category": ["trojan"]}
+            await client.labs.create_yara_rule("r1", ["trojan"], "rule")
+            assert json.loads(server.requests[-1].body)["threat_categories"] == ["trojan"]
+            assert (await client.labs.get_yara_rule("r1"))["path"] == (
+                "/api/labs/hunting/yara-rules/r1"
+            )
+            await client.labs.update_yara_rule("r1", active=False)
+            assert json.loads(server.requests[-1].body) == {"active": False}
+            assert await client.labs.delete_yara_rule("r1") is None
 
     run(body())
 

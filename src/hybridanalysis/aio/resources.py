@@ -12,6 +12,7 @@ from hybridanalysis.resources.abuse_reports import AbuseReportsResource
 from hybridanalysis.resources.feed import FeedResource
 from hybridanalysis.resources.file_collection import FileCollectionResource
 from hybridanalysis.resources.key import KeyResource
+from hybridanalysis.resources.labs import LabsResource
 from hybridanalysis.resources.overview import OverviewResource
 from hybridanalysis.resources.quick_scan import QuickScanResource
 from hybridanalysis.resources.report import ReportResource
@@ -27,6 +28,10 @@ class AsyncFeedResource(FeedResource, AsyncBaseResource):
 
 
 class AsyncKeyResource(KeyResource, AsyncBaseResource):
+    pass
+
+
+class AsyncLabsResource(LabsResource, AsyncBaseResource):
     pass
 
 
@@ -67,6 +72,7 @@ __all__ = [
     "AsyncFeedResource",
     "AsyncFileCollectionResource",
     "AsyncKeyResource",
+    "AsyncLabsResource",
     "AsyncOverviewResource",
     "AsyncQuickScanResource",
     "AsyncReportResource",
