@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "hybridanalysis"
-version = "0.1.2"
+version = "0.2.0"
 description = "Python library and CLI for the Hybrid Analysis (Falcon Sandbox) API v2"
 readme = "README.md"
 requires-python = ">=3.14"
