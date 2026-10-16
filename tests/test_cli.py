@@ -258,3 +258,140 @@ def test_main_callable() -> None:
     finally:
         sys.argv = original
     assert info.value.code == 0
+
+
+def test_labs_cli_commands(server: LocalAPIServer) -> None:
+    result = run(
+        server,
+        "labs",
+        "hunting",
+        "recent",
+        "--items-count",
+        "25",
+        "--search-after",
+        "2026-01-01T00:00:00Z",
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output)["path"] == "/api/labs/hunting/matches/recent"
+    assert server.requests[-1].query == {
+        "items_count": ["25"],
+        "search_after": ["2026-01-01T00:00:00Z"],
+    }
+
+    assert run(server, "labs", "overview", "abc").exit_code == 0
+    assert server.requests[-1].path == "/api/labs/sample/abc/overview"
+
+    result = run(
+        server,
+        "labs",
+        "search",
+        "query",
+        "verdict:malicious",
+        "--page",
+        "2",
+        "--size",
+        "100",
+        "--date-from",
+        "2026-01-01",
+        "--date-to",
+        "2026-02-01",
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(server.requests[-1].body) == {
+        "query": "verdict:malicious",
+        "page": 2,
+        "size": 100,
+        "date_from": "2026-01-01",
+        "date_to": "2026-02-01",
+    }
+    assert run(server, "labs", "search", "results", "q1").exit_code == 0
+    assert server.requests[-1].path == "/api/labs/search/query/q1/results"
+
+    result = run(
+        server,
+        "labs",
+        "hunting",
+        "rules",
+        "list",
+        "--search",
+        "test",
+        "--threat-category",
+        "trojan",
+        "--threat-category",
+        "ransomware",
+        "--status",
+        "active",
+    )
+    assert result.exit_code == 0, result.output
+    assert server.requests[-1].query == {
+        "search": ["test"],
+        "threat_category": ["trojan", "ransomware"],
+        "status": ["active"],
+    }
+
+    result = run(
+        server,
+        "labs",
+        "hunting",
+        "rules",
+        "create",
+        "demo-rule",
+        "rule demo { condition: true }",
+        "--threat-category",
+        "trojan",
+        "--active",
+        "--daily-notifications-limit",
+        "5",
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(server.requests[-1].body) == {
+        "identifier": "demo-rule",
+        "threat_categories": ["trojan"],
+        "rule": "rule demo { condition: true }",
+        "active": True,
+        "daily_notifications_limit": 5,
+    }
+
+    assert run(server, "labs", "hunting", "rules", "get", "r1").exit_code == 0
+    assert server.requests[-1].path == "/api/labs/hunting/yara-rules/r1"
+    result = run(
+        server,
+        "labs",
+        "hunting",
+        "rules",
+        "update",
+        "r1",
+        "--identifier",
+        "updated",
+        "--paused",
+        "--reset-counter",
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(server.requests[-1].body) == {
+        "identifier": "updated",
+        "active": False,
+        "reset_counter": True,
+    }
+    assert run(server, "labs", "hunting", "rules", "delete", "r1").exit_code == 0
+    assert server.requests[-1].method == "DELETE"
+    assert server.requests[-1].path == "/api/labs/hunting/yara-rules/r1"
+
+
+def test_labs_cli_help_needs_no_credentials() -> None:
+    result = runner.invoke(cli, ["labs", "hunting", "rules", "create", "--help"])
+    assert result.exit_code == 0, result.output
+
+
+def test_labs_cli_rejects_unknown_threat_category(server: LocalAPIServer) -> None:
+    result = run(
+        server,
+        "labs",
+        "hunting",
+        "rules",
+        "create",
+        "demo",
+        "rule",
+        "--threat-category",
+        "unknown",
+    )
+    assert result.exit_code == 2

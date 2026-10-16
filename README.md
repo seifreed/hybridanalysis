@@ -27,17 +27,17 @@
 ## Overview
 
 **hybridanalysis** is a Python toolkit to submit samples to and query the
-[Hybrid Analysis](https://hybrid-analysis.com) (Falcon Sandbox) service through its
-[API v2](https://hybrid-analysis.com/docs/api/v2). It ships both a **synchronous** and
-an **asynchronous** client with identical surfaces, a full-featured **CLI**, and a typed
-exception hierarchy — covering every current (non-deprecated) endpoint across all ten
-API tags.
+[Hybrid Analysis](https://hybrid-analysis.com) service through its
+[stable API v2](https://hybrid-analysis.com/docs/api/v2) and [experimental API Labs](https://hybrid-analysis.com/docs/api/labs).
+It ships both a **synchronous** and an **asynchronous** client with identical surfaces,
+a **CLI**, and a typed exception hierarchy — covering every current (non-deprecated)
+v2 endpoint and every documented Labs operation.
 
 ### Key Features
 
 | Feature | Description |
 |---------|-------------|
-| **Full API coverage** | Every current v2 endpoint across `feed`, `key`, `overview`, `quick-scan`, `submit`, `report`, `search`, `file-collection`, `abuse-reports`, `system` |
+| **Full API coverage** | Every current v2 endpoint plus all documented API Labs operations |
 | **Sync + Async** | `HybridAnalysisClient` (httpx) and `AsyncHybridAnalysisClient` (httpx async) with the same methods |
 | **CLI + Library** | Use as the `hybridanalysis` command-line tool or as a Python package |
 | **Rich search** | Query by domain, host/IP, URL, malware family, tag, MITRE ATT&CK technique, hash-similarity and more |
@@ -50,7 +50,7 @@ API tags.
 ```text
 Clients      HybridAnalysisClient (sync), AsyncHybridAnalysisClient (async)
 Tags         feed · key · overview · quick-scan · submit · report
-             search · file-collection · abuse-reports · system
+             search · file-collection · abuse-reports · system · labs
 Downloads    sample, pcap, certificate, dropped files, memory strings (bytes/text)
 Config       HYBRIDANALYSIS env var · ~/.config/hybridanalysis/config.toml
 Errors       AuthenticationError · NotFoundError · RateLimitError · APIError
@@ -114,6 +114,9 @@ hybridanalysis key current
 # Submit a sample and poll its report
 hybridanalysis submit file sample.exe environment_id=160
 hybridanalysis report summary <job-id>
+
+# Query the experimental API Labs search
+hybridanalysis labs search query 'verdict:malicious AND score:80+'
 ```
 
 ---
@@ -172,6 +175,27 @@ hybridanalysis report summary <job-id> --format sarif # SARIF 2.1.0 findings
 | `hybridanalysis report` | Report state/summary and artifact downloads |
 | `hybridanalysis file-collection` | Create, search, and manage file collections |
 | `hybridanalysis abuse-reports` | Request report deletion; removed-hash feed |
+| `hybridanalysis labs` | Experimental query search, sample overview, YARA hunting rules and recent matches |
+
+### API Labs Commands
+
+API Labs is experimental and may change independently of API v2. `labs hunting recent`
+marks returned matches as delivered, so later calls omit them. See the [Labs API reference](https://hybrid-analysis.com/docs/api/labs).
+
+| Command | API operation | Options |
+|---------|---------------|---------|
+| `labs overview SHA256` | `GET /sample/{sha256}/overview` | `--format json\|toon\|sarif` |
+| `labs search query QUERY` | `POST /search/query/run` | `--page`, `--size`, `--date-from`, `--date-to` |
+| `labs search results ID` | `GET /search/query/{id}/results` | `--format json\|toon` |
+| `labs hunting recent` | `GET /hunting/matches/recent` | `--items-count`, `--search-after` |
+| `labs hunting rules list` | `GET /hunting/yara-rules` | `--search`, repeatable `--threat-category`, `--status active\|paused` |
+| `labs hunting rules create IDENTIFIER RULE` | `POST /hunting/yara-rules` | repeatable required `--threat-category`, `--active\|--paused`, `--daily-notifications-limit` |
+| `labs hunting rules get ID` | `GET /hunting/yara-rules/{id}` | `--format json\|toon` |
+| `labs hunting rules update ID` | `POST /hunting/yara-rules/{id}` | `--identifier`, repeatable `--threat-category`, `--active\|--paused`, `--daily-notifications-limit`, `--rule`, `--reset-counter\|--keep-counter` |
+| `labs hunting rules delete ID` | `DELETE /hunting/yara-rules/{id}` | `--format json\|toon` |
+
+`file-collection` remains available for compatibility, but API v2 deprecated those
+endpoints and stopped supporting them after August 21, 2026; the service returns `410 Gone`.
 
 ---
 

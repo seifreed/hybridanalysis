@@ -13,6 +13,23 @@ from .config import DEFAULT_BASE_URL, Config, load
 from .errors import HybridAnalysisError
 from .formats import to_json, to_sarif, to_toon
 
+_LABS_THREAT_CATEGORIES = (
+    "adware",
+    "banker",
+    "downloader",
+    "dropper",
+    "fakeav",
+    "hacktool",
+    "miner",
+    "phishing",
+    "pua",
+    "ransomware",
+    "spyware",
+    "trojan",
+    "virus",
+    "worm",
+)
+
 
 class _CLIGroup(click.Group):
     """Group that turns library errors into clean CLI errors."""
@@ -128,7 +145,7 @@ _format_analysis_option = click.option(
 def cli(
     ctx: click.Context, api_key: str | None, base_url: str | None, config_path: str | None
 ) -> None:
-    """Interact with the Hybrid Analysis (Falcon Sandbox) API v2."""
+    """Interact with the Hybrid Analysis API v2 and experimental API Labs."""
     ctx.obj = _LazyClient(api_key, base_url, config_path)
     ctx.call_on_close(ctx.obj.close)
 
@@ -654,6 +671,193 @@ def file_collection_download_selected(
     client: HybridAnalysisClient, collection_id: str, hashes: tuple[str, ...], out: str | None
 ) -> None:
     _emit_bytes(client.file_collection.download_selected(collection_id, list(hashes)), out)
+
+
+# --- API Labs ------------------------------------------------------------
+@cli.group()
+def labs() -> None:
+    """Interact with the experimental Hybrid Analysis API Labs."""
+
+
+@labs.command("overview")
+@click.argument("sha256")
+@_format_analysis_option
+@click.pass_obj
+def labs_overview(client: HybridAnalysisClient, sha256: str, fmt: str) -> None:
+    _emit(client.labs.overview(sha256), fmt, source=sha256)
+
+
+@labs.group("search")
+def labs_search_group() -> None:
+    """Search with the API Labs query language."""
+
+
+@labs_search_group.command("query")
+@click.argument("query")
+@click.option("--page", type=click.IntRange(min=1), default=None)
+@click.option("--size", type=click.IntRange(min=1, max=200), default=None)
+@click.option("--date-from", default=None)
+@click.option("--date-to", default=None)
+@_format_option
+@click.pass_obj
+def labs_search_query(
+    client: HybridAnalysisClient,
+    query: str,
+    page: int | None,
+    size: int | None,
+    date_from: str | None,
+    date_to: str | None,
+    fmt: str,
+) -> None:
+    _emit(
+        client.labs.search_query(
+            query, page=page, size=size, date_from=date_from, date_to=date_to
+        ),
+        fmt,
+    )
+
+
+@labs_search_group.command("results")
+@click.argument("query_id")
+@_format_option
+@click.pass_obj
+def labs_search_results(client: HybridAnalysisClient, query_id: str, fmt: str) -> None:
+    _emit(client.labs.search_results(query_id), fmt)
+
+
+@labs.group()
+def hunting() -> None:
+    """Manage YARA hunting and retrieve matches."""
+
+
+@hunting.command("recent")
+@click.option("--items-count", type=click.IntRange(min=1, max=1000), default=None)
+@click.option("--search-after", default=None)
+@_format_option
+@click.pass_obj
+def labs_recent_matches(
+    client: HybridAnalysisClient, items_count: int | None, search_after: str | None, fmt: str
+) -> None:
+    _emit(client.labs.recent_matches(items_count=items_count, search_after=search_after), fmt)
+
+
+@hunting.group("rules")
+def hunting_rules() -> None:
+    """Manage YARA hunting rules."""
+
+
+@hunting_rules.command("list")
+@click.option("--search", default=None)
+@click.option("--threat-category", "threat_categories", multiple=True)
+@click.option("--status", type=click.Choice(["active", "paused"]), default=None)
+@_format_option
+@click.pass_obj
+def labs_list_yara_rules(
+    client: HybridAnalysisClient,
+    search: str | None,
+    threat_categories: tuple[str, ...],
+    status: str | None,
+    fmt: str,
+) -> None:
+    _emit(
+        client.labs.yara_rules(
+            search=search,
+            threat_category=list(threat_categories) or None,
+            status=status,
+        ),
+        fmt,
+    )
+
+
+@hunting_rules.command("create")
+@click.argument("identifier")
+@click.argument("rule")
+@click.option(
+    "--threat-category",
+    "threat_categories",
+    type=click.Choice(_LABS_THREAT_CATEGORIES),
+    multiple=True,
+    required=True,
+)
+@click.option("--active/--paused", default=None)
+@click.option("--daily-notifications-limit", type=int, default=None)
+@_format_option
+@click.pass_obj
+def labs_create_yara_rule(
+    client: HybridAnalysisClient,
+    identifier: str,
+    rule: str,
+    threat_categories: tuple[str, ...],
+    active: bool | None,
+    daily_notifications_limit: int | None,
+    fmt: str,
+) -> None:
+    _emit(
+        client.labs.create_yara_rule(
+            identifier,
+            list(threat_categories),
+            rule,
+            active=active,
+            daily_notifications_limit=daily_notifications_limit,
+        ),
+        fmt,
+    )
+
+
+@hunting_rules.command("get")
+@click.argument("rule_id")
+@_format_option
+@click.pass_obj
+def labs_get_yara_rule(client: HybridAnalysisClient, rule_id: str, fmt: str) -> None:
+    _emit(client.labs.get_yara_rule(rule_id), fmt)
+
+
+@hunting_rules.command("update")
+@click.argument("rule_id")
+@click.option("--identifier", default=None)
+@click.option(
+    "--threat-category",
+    "threat_categories",
+    type=click.Choice(_LABS_THREAT_CATEGORIES),
+    multiple=True,
+)
+@click.option("--active/--paused", default=None)
+@click.option("--daily-notifications-limit", type=int, default=None)
+@click.option("--rule", "rule_source", default=None)
+@click.option("--reset-counter/--keep-counter", default=None)
+@_format_option
+@click.pass_obj
+def labs_update_yara_rule(
+    client: HybridAnalysisClient,
+    rule_id: str,
+    identifier: str | None,
+    threat_categories: tuple[str, ...],
+    active: bool | None,
+    daily_notifications_limit: int | None,
+    rule_source: str | None,
+    reset_counter: bool | None,
+    fmt: str,
+) -> None:
+    _emit(
+        client.labs.update_yara_rule(
+            rule_id,
+            identifier=identifier,
+            threat_categories=list(threat_categories) or None,
+            active=active,
+            daily_notifications_limit=daily_notifications_limit,
+            rule=rule_source,
+            reset_counter=reset_counter,
+        ),
+        fmt,
+    )
+
+
+@hunting_rules.command("delete")
+@click.argument("rule_id")
+@_format_option
+@click.pass_obj
+def labs_delete_yara_rule(client: HybridAnalysisClient, rule_id: str, fmt: str) -> None:
+    _emit(client.labs.delete_yara_rule(rule_id), fmt)
 
 
 def main() -> None:
