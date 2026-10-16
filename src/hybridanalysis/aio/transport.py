@@ -6,7 +6,7 @@ from typing import Any, BinaryIO
 
 import httpx
 
-from hybridanalysis._http import Parse, client_kwargs, parse_response
+from hybridanalysis._http import Parse, client_kwargs, parse_response, retryable
 from hybridanalysis._lifecycle import AsyncCloseable
 from hybridanalysis.config import Config
 from hybridanalysis.errors import NetworkError
@@ -39,7 +39,14 @@ class AsyncTransport(AsyncCloseable):
                 method, path, params=params, data=data, files=files
             )
         except httpx.HTTPError as exc:
-            raise NetworkError(f"Request to {path} failed: {exc}") from exc
+            if not retryable(method, exc):
+                raise NetworkError(f"Request to {path} failed: {exc}") from exc
+            try:
+                response = await self._client.request(
+                    method, path, params=params, data=data, files=files
+                )
+            except httpx.HTTPError as retry_exc:
+                raise NetworkError(f"Request to {path} failed: {retry_exc}") from retry_exc
         return parse_response(response, parse)
 
     async def aclose(self) -> None:

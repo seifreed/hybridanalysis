@@ -90,6 +90,64 @@ def test_async_transport_network_error() -> None:
     run(body())
 
 
+def test_async_read_timeout_retries_idempotent_request() -> None:
+    attempts = 0
+
+    async def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise httpx.ReadTimeout("timed out", request=request)
+        return httpx.Response(200, json={"ok": True})
+
+    async def body() -> None:
+        client = httpx.AsyncClient(base_url="http://test", transport=httpx.MockTransport(respond))
+        async with AsyncTransport(Config(api_key="k"), http_client=client) as tr:
+            assert await tr.request("GET", "/system/version") == {"ok": True}
+        await client.aclose()
+        assert attempts == 2
+
+    run(body())
+
+
+def test_async_read_timeout_does_not_retry_post() -> None:
+    attempts = 0
+
+    async def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    async def body() -> None:
+        client = httpx.AsyncClient(base_url="http://test", transport=httpx.MockTransport(respond))
+        async with AsyncTransport(Config(api_key="k"), http_client=client) as tr:
+            with pytest.raises(NetworkError, match="failed"):
+                await tr.request("POST", "/submit/file")
+        await client.aclose()
+        assert attempts == 1
+
+    run(body())
+
+
+def test_async_read_timeout_after_retry_is_wrapped() -> None:
+    attempts = 0
+
+    async def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    async def body() -> None:
+        client = httpx.AsyncClient(base_url="http://test", transport=httpx.MockTransport(respond))
+        async with AsyncTransport(Config(api_key="k"), http_client=client) as tr:
+            with pytest.raises(NetworkError, match="failed"):
+                await tr.request("GET", "/system/version")
+        await client.aclose()
+        assert attempts == 2
+
+    run(body())
+
+
 def test_async_injected_client_not_closed(server: LocalAPIServer) -> None:
     async def body() -> None:
         client = httpx.AsyncClient(

@@ -15,6 +15,14 @@ from .config import Config
 from .errors import error_for_status
 
 Parse = Literal["json", "text", "bytes"]
+_IDEMPOTENT_METHODS = {"DELETE", "GET", "HEAD", "OPTIONS", "PUT"}
+
+
+def retryable(method: str, error: httpx.HTTPError) -> bool:
+    """Retry connection failures for any method and timeouts for idempotent ones."""
+    return isinstance(error, (httpx.ConnectError, httpx.ConnectTimeout)) or (
+        method.upper() in _IDEMPOTENT_METHODS and isinstance(error, httpx.TimeoutException)
+    )
 
 
 def client_kwargs(config: Config) -> dict[str, Any]:

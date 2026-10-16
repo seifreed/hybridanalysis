@@ -100,6 +100,59 @@ def test_network_error_is_wrapped() -> None:
         tr.request("GET", "/system/version")
 
 
+def test_read_timeout_retries_idempotent_request() -> None:
+    attempts = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise httpx.ReadTimeout("timed out", request=request)
+        return httpx.Response(200, json={"ok": True})
+
+    client = httpx.Client(base_url="http://test", transport=httpx.MockTransport(respond))
+    with Transport(Config(api_key="k"), http_client=client) as tr:
+        assert tr.request("GET", "/system/version") == {"ok": True}
+    client.close()
+    assert attempts == 2
+
+
+def test_read_timeout_does_not_retry_post() -> None:
+    attempts = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    client = httpx.Client(base_url="http://test", transport=httpx.MockTransport(respond))
+    with (
+        Transport(Config(api_key="k"), http_client=client) as tr,
+        pytest.raises(NetworkError, match="failed"),
+    ):
+        tr.request("POST", "/submit/file")
+    client.close()
+    assert attempts == 1
+
+
+def test_read_timeout_after_retry_is_wrapped() -> None:
+    attempts = 0
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        nonlocal attempts
+        attempts += 1
+        raise httpx.ReadTimeout("timed out", request=request)
+
+    client = httpx.Client(base_url="http://test", transport=httpx.MockTransport(respond))
+    with (
+        Transport(Config(api_key="k"), http_client=client) as tr,
+        pytest.raises(NetworkError, match="failed"),
+    ):
+        tr.request("GET", "/system/version")
+    client.close()
+    assert attempts == 2
+
+
 def test_owned_client_is_closed(config: Config) -> None:
     transport = Transport(config)
     transport.request("GET", "/system/version")
