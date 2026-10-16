@@ -109,7 +109,7 @@ def _emit_bytes(data: bytes, out: str | None) -> None:
         Path(out).write_bytes(data)
         click.echo(f"Wrote {len(data)} bytes to {out}")
     else:
-        click.get_binary_stream("stdout").write(data)
+        click.echo(data, nl=False)
 
 
 _out_option = click.option("-o", "--out", type=click.Path(dir_okay=False), default=None)
